@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Parking Tracker">
+    <title>Parking Lot Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            padding-bottom: 80px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .setup-section {
+            margin-bottom: 20px;
+        }
+
+        .setup-section label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .setup-section input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .setup-section input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .parking-grid {
+            display: grid;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .parking-spot {
+            aspect-ratio: 1;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 3px solid transparent;
+            position: relative;
+        }
+
+        .parking-spot.free {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+            color: #0c5c4a;
+        }
+
+        .parking-spot.occupied {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: #8b2635;
+        }
+
+        .parking-spot:active {
+            transform: scale(0.95);
+        }
+
+        .spot-number {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        .spot-status {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+        }
+
+        .analytics-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .analytics-item h3 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .analytics-item p {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .percentage-bar {
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .percentage-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #84fab0 0%, #8fd3f4 100%);
+            transition: width 0.3s;
+        }
+
+        .filter-section {
+            margin-bottom: 20px;
+        }
+
+        .filter-section select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            background: white;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .history-item {
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .history-time {
+            color: #666;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🅿️ Parking Tracker</h1>
+            <p>Track your parking lot occupancy</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('tracker')">Tracker</button>
+            <button class="tab" onclick="showTab('analytics')">Analytics</button>
+            <button class="tab" onclick="showTab('history')">History</button>
+        </div>
+
+        <div id="tracker-view">
+            <div class="card" id="setup-card">
+                <div class="setup-section">
+                    <label>Number of Parking Spots:</label>
+                    <input type="number" id="spot-count" value="12" min="1" max="100">
+                </div>
+                <div class="setup-section">
+                    <label>Columns:</label>
+                    <input type="number" id="columns" value="3" min="1" max="10">
+                </div>
+                <button class="btn btn-primary" onclick="setupGrid()">Create Grid</button>
+            </div>
+
+            <div class="card hidden" id="grid-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h2 style="font-size: 20px; color: #333;">Parking Lot</h2>
+                    <button class="btn btn-secondary" onclick="resetGrid()" style="width: auto; padding: 8px 16px; margin: 0;">Reset</button>
+                </div>
+                <div id="parking-grid" class="parking-grid"></div>
+            </div>
+        </div>
+
+        <div id="analytics-view" class="hidden">
+            <div class="card">
+                <div class="filter-section">
+                    <label>Time Period:</label>
+                    <select id="time-filter" onchange="updateAnalytics()">
+                        <option value="24">Last 24 Hours</option>
+                        <option value="168">Last 7 Days</option>
+                        <option value="720">Last 30 Days</option>
+                        <option value="all">All Time</option>
+                    </select>
+                </div>
+                <div id="analytics-content"></div>
+            </div>
+        </div>
+
+        <div id="history-view" class="hidden">
+            <div class="card">
+                <h2 style="font-size: 20px; color: #333; margin-bottom: 15px;">Recent Activity</h2>
+                <div id="history-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let parkingData = [];
+        let spotCount = 0;
+        let columns = 3;
+
+        // Load data from storage
+        function loadData() {
+            const stored = window.storage ? null : localStorage.getItem('parkingData');
+            if (stored) {
+                parkingData = JSON.parse(stored);
+            }
+        }
+
+        // Save data to storage
+        async function saveData() {
+            if (window.storage) {
+                try {
+                    await window.storage.set('parking-data', JSON.stringify(parkingData));
+                } catch (error) {
+                    console.error('Storage error:', error);
+                }
+            } else {
+                localStorage.setItem('parkingData', JSON.stringify(parkingData));
+            }
+        }
+
+        // Initialize from storage
+        async function initializeFromStorage() {
+            if (window.storage) {
+                try {
+                    const result = await window.storage.get('parking-data');
+                    if (result && result.value) {
+                        parkingData = JSON.parse(result.value);
+                        
+                        // Restore grid if we have data
+                        if (parkingData.length > 0) {
+                            spotCount = Math.max(...parkingData.map(d => d.spotNumber)) || 0;
+                            columns = 3; // default
+                            document.getElementById('spot-count').value = spotCount;
+                            setupGrid();
+                        }
+                    }
+                } catch (error) {
+                    console.log('No previous data found');
+                }
+            } else {
+                loadData();
+                if (parkingData.length > 0) {
+                    spotCount = Math.max(...parkingData.map(d => d.spotNumber)) || 0;
+                    columns = 3;
+                    document.getElementById('spot-count').value = spotCount;
+                    setupGrid();
+                }
+            }
+        }
+
+        function setupGrid() {
+            spotCount = parseInt(document.getElementById('spot-count').value);
+            columns = parseInt(document.getElementById('columns').value);
+            
+            const grid = document.getElementById('parking-grid');
+            grid.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
+            grid.innerHTML = '';
+            
+            for (let i = 1; i <= spotCount; i++) {
+                const spot = document.createElement('div');
+                spot.className = 'parking-spot occupied';
+                spot.innerHTML = `
+                    <div class="spot-number">#${i}</div>
+                    <div class="spot-status">Occupied</div>
+                `;
+                spot.onclick = () => toggleSpot(i, spot);
+                grid.appendChild(spot);
+            }
+            
+            document.getElementById('setup-card').classList.add('hidden');
+            document.getElementById('grid-card').classList.remove('hidden');
+        }
+
+        function toggleSpot(spotNumber, element) {
+            const currentStatus = element.classList.contains('occupied') ? 'occupied' : 'free';
+            const newStatus = currentStatus === 'occupied' ? 'free' : 'occupied';
+            
+            // Update UI
+            element.className = `parking-spot ${newStatus}`;
+            element.querySelector('.spot-status').textContent = newStatus === 'free' ? 'Free' : 'Occupied';
+            
+            // Log the change
+            parkingData.push({
+                spotNumber: spotNumber,
+                status: newStatus,
+                timestamp: new Date().toISOString()
+            });
+            
+            saveData();
+        }
+
+        function resetGrid() {
+            document.getElementById('setup-card').classList.remove('hidden');
+            document.getElementById('grid-card').classList.add('hidden');
+        }
+
+        function showTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.getElementById('tracker-view').classList.add('hidden');
+            document.getElementById('analytics-view').classList.add('hidden');
+            document.getElementById('history-view').classList.add('hidden');
+            
+            if (tab === 'tracker') {
+                document.getElementById('tracker-view').classList.remove('hidden');
+            } else if (tab === 'analytics') {
+                document.getElementById('analytics-view').classList.remove('hidden');
+                updateAnalytics();
+            } else if (tab === 'history') {
+                document.getElementById('history-view').classList.remove('hidden');
+                updateHistory();
+            }
+        }
+
+        function updateAnalytics() {
+            const filter = document.getElementById('time-filter').value;
+            const now = new Date();
+            let cutoffTime = new Date(0);
+            
+            if (filter !== 'all') {
+                cutoffTime = new Date(now - parseInt(filter) * 60 * 60 * 1000);
+            }
+            
+            const filteredData = parkingData.filter(d => new Date(d.timestamp) >= cutoffTime);
+            
+            // Calculate statistics per spot
+            const spotStats = {};
+            for (let i = 1; i <= spotCount; i++) {
+                spotStats[i] = { free: 0, occupied: 0, total: 0 };
+            }
+            
+            filteredData.forEach(record => {
+                if (spotStats[record.spotNumber]) {
+                    spotStats[record.spotNumber][record.status]++;
+                    spotStats[record.spotNumber].total++;
+                }
+            });
+            
+            // Sort by free percentage
+            const sortedSpots = Object.entries(spotStats)
+                .filter(([_, stats]) => stats.total > 0)
+                .sort((a, b) => {
+                    const aFreePercent = (a[1].free / a[1].total) * 100;
+                    const bFreePercent = (b[1].free / b[1].total) * 100;
+                    return bFreePercent - aFreePercent;
+                });
+            
+            const content = document.getElementById('analytics-content');
+            
+            if (sortedSpots.length === 0) {
+                content.innerHTML = '<p style="text-align: center; color: #999;">No data available for this period</p>';
+                return;
+            }
+            
+            content.innerHTML = sortedSpots.map(([spotNum, stats]) => {
+                const freePercent = ((stats.free / stats.total) * 100).toFixed(1);
+                return `
+                    <div class="analytics-item">
+                        <h3>Spot #${spotNum}</h3>
+                        <p>${freePercent}% free (${stats.free} of ${stats.total} records)</p>
+                        <div class="percentage-bar">
+                            <div class="percentage-fill" style="width: ${freePercent}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateHistory() {
+            const content = document.getElementById('history-content');
+            const recent = parkingData.slice(-50).reverse();
+            
+            if (recent.length === 0) {
+                content.innerHTML = '<p style="text-align: center; color: #999;">No history yet</p>';
+                return;
+            }
+            
+            content.innerHTML = recent.map(record => {
+                const date = new Date(record.timestamp);
+                const timeStr = date.toLocaleString();
+                const statusColor = record.status === 'free' ? '#0c5c4a' : '#8b2635';
+                
+                return `
+                    <div class="history-item">
+                        <strong style="color: ${statusColor}">Spot #${record.spotNumber}</strong> marked as 
+                        <strong>${record.status}</strong>
+                        <div class="history-time">${timeStr}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Initialize on load
+        initializeFromStorage();
+    </script>
+</body>
+</html>
